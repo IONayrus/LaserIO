@@ -23,6 +23,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.ItemTags;
@@ -190,9 +191,10 @@ public class EventTooltip {
           GasStack drawGasStack = new GasStack(gas, 1000);
           matrices.pushPose();
           if(!drawGasStack.isEmpty()) {
-            ItemLike tank = MekanismBlocks.BASIC_CHEMICAL_TANK.asItem();
-            ItemStack tankStack = new ItemStack(tank, 1);
-            tooltipItemRenderer.renderGuiItem(8f, tankStack, x, y, itemRenderer.getModel(tankStack, null, null, 0));
+            var tankItemStack = MekanismBlocks.BASIC_CHEMICAL_TANK.getItemStack();
+            tankItemStack.setCount(1);
+            tankItemStack.setTag(gas.write(new CompoundTag()));
+            tooltipItemRenderer.renderGuiItem(8f, tankItemStack, x, y, itemRenderer.getModel(tankItemStack, null, null, 0));
           }
           matrices.popPose();
       }
