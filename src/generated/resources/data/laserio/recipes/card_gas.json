@@ -6,10 +6,10 @@
       "tag": "forge:nuggets/gold"
     },
     "l": {
-      "item": "minecraft:bucket"
+      "item": "mekanism:alloy_infused"
     },
     "p": {
-      "item": "mekanism:alloy_infused"
+      "item": "laserio:logic_chip"
     },
     "q": {
       "tag": "forge:gems/quartz"
