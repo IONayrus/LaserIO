@@ -1,14 +1,32 @@
 package com.direwolf20.laserio.util;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+
+import com.direwolf20.laserio.common.addons.mekanism.MekanismCapabilities;
 import com.direwolf20.laserio.common.blockentities.LaserNodeBE;
 import com.direwolf20.laserio.common.items.cards.BaseCard;
 import com.direwolf20.laserio.common.items.cards.CardEnergy;
 import com.direwolf20.laserio.common.items.cards.CardFluid;
+import com.direwolf20.laserio.common.items.cards.CardGas;
 import com.direwolf20.laserio.common.items.cards.CardItem;
-import com.direwolf20.laserio.common.items.filters.*;
+import com.direwolf20.laserio.common.items.filters.BaseFilter;
+import com.direwolf20.laserio.common.items.filters.FilterBasic;
+import com.direwolf20.laserio.common.items.filters.FilterCount;
+import com.direwolf20.laserio.common.items.filters.FilterMod;
+import com.direwolf20.laserio.common.items.filters.FilterTag;
+
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import mekanism.api.chemical.ChemicalTags;
+import mekanism.api.chemical.gas.Gas;
+import mekanism.api.chemical.gas.GasStack;
+import mekanism.api.chemical.gas.IGasHandler;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
@@ -17,8 +35,6 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.ForgeRegistries;
-
-import java.util.*;
 
 public class BaseCardCache {
     public final Direction direction;
@@ -30,6 +46,7 @@ public class BaseCardCache {
     public final int cardSlot;
     public final List<ItemStack> filteredItems;
     public final List<FluidStack> filteredFluids;
+    public final List<GasStack> filteredGases;
     public final List<String> filterTags;
     public final byte sneaky;
     public final LaserNodeBE be;
@@ -45,6 +62,9 @@ public class BaseCardCache {
     //Fluids
     public final Map<FluidStackKey, Boolean> filterCacheFluid = new Object2BooleanOpenHashMap<>();
     public final Map<FluidStackKey, Integer> filterCountsFluid = new Object2IntOpenHashMap<>();
+    //Gases
+    public final Map<GasStackKey, Boolean> filterCacheGas = new Object2BooleanOpenHashMap<>();
+    public final Map<GasStackKey, Integer> filterCountsGas = new Object2IntOpenHashMap<>();
 
     public BaseCardCache(Direction direction, ItemStack cardItem, int cardSlot, LaserNodeBE be) {
         this.cardItem = cardItem;
@@ -59,6 +79,8 @@ public class BaseCardCache {
             cardType = BaseCard.CardType.ITEM;
         else if (cardItem.getItem() instanceof CardFluid)
             cardType = BaseCard.CardType.FLUID;
+        else if (cardItem.getItem() instanceof CardGas)
+            cardType = BaseCard.CardType.GAS;
         else if (cardItem.getItem() instanceof CardEnergy) {
             cardType = BaseCard.CardType.ENERGY;
             this.insertLimit = CardEnergy.getInsertLimitPercent(cardItem);
@@ -70,12 +92,14 @@ public class BaseCardCache {
         if (filterCard.equals(ItemStack.EMPTY)) {
             filteredItems = new ArrayList<>();
             filteredFluids = new ArrayList<>();
+            filteredGases = new ArrayList<>();
             filterTags = new ArrayList<>();
             isAllowList = false;
             isCompareNBT = false;
         } else {
             this.filteredItems = getFilteredItems();
             this.filteredFluids = getFilteredFluids();
+            this.filteredGases = getFilteredGases();
             this.filterTags = getFilterTags();
             isAllowList = BaseFilter.getAllowList(filterCard);
             isCompareNBT = BaseFilter.getCompareNBT(filterCard);
@@ -148,6 +172,38 @@ public class BaseCardCache {
         return 0; //Should never get here in theory
     }
 
+    public int getFilterAmt(GasStack testStack) {
+      if (filterCard.equals(ItemStack.EMPTY))
+          return 0; //If theres no filter in the card (This should never happen in theory)
+      if (!(filterCard.getItem() instanceof FilterCount)) { //If this is a basic or tag Card return -1 which will mean infinite amount
+          return -1;
+      }
+      GasStackKey key = new GasStackKey(testStack, isCompareNBT);
+      if (filterCountsGas.containsKey(key)) //If we've already tested this, get it from the cache
+          return filterCountsGas.get(key);
+
+      ItemStackHandler filterSlotHandler = FilterCount.getInventory(filterCard);
+      for (int i = 0; i < filterSlotHandler.getSlots(); i++) { //Gotta iterate the card's NBT because of the way we store amounts (in the MBAmt tag)
+          ItemStack itemStack = filterSlotHandler.getStackInSlot(i);
+          if (!itemStack.isEmpty()) {
+              Optional<IGasHandler> gasHandlerLazyOptional = itemStack.getCapability(MekanismCapabilities.GAS_HANDLER).resolve();
+              if (gasHandlerLazyOptional.isEmpty()) 
+                continue;
+              IGasHandler gasHandler = gasHandlerLazyOptional.get();
+              for (int tank = 0; tank < gasHandler.getTanks(); tank++) {
+                  GasStack gasStack = gasHandler.getChemicalInTank(tank);
+                  if (key.equals(new GasStackKey(gasStack, isCompareNBT))) {
+                      int mbAmt = FilterCount.getSlotAmount(filterCard, i);
+                      filterCountsGas.put(key, mbAmt);
+                      return mbAmt;
+                  }
+              }
+          }
+      }
+      filterCountsGas.put(key, 0);
+      return 0; //Should never get here in theory
+  }
+
     public List<ItemStack> getFilteredItems() {
         List<ItemStack> filteredItems = new ArrayList<>();
         ItemStackHandler filterSlotHandler;
@@ -185,6 +241,35 @@ public class BaseCardCache {
         }
         return filteredFluids;
     }
+
+    public List<GasStack> getFilteredGases() {
+      List<GasStack> filteredGases = new ArrayList<>();
+      ItemStackHandler filterSlotHandler;
+
+      if (filterCard.getItem() instanceof FilterBasic)
+          filterSlotHandler = FilterBasic.getInventory(filterCard);
+      else
+          filterSlotHandler = FilterCount.getInventory(filterCard);
+
+      for (int i = 0; i < filterSlotHandler.getSlots(); i++) {
+          ItemStack itemStack = filterSlotHandler.getStackInSlot(i);
+
+          if (!itemStack.isEmpty()) {
+              Optional<IGasHandler> gasHandlerLazyOptional =  itemStack.getCapability(MekanismCapabilities.GAS_HANDLER).resolve();
+              
+              if (gasHandlerLazyOptional.isEmpty()) 
+                continue;
+
+              IGasHandler gasHandler = gasHandlerLazyOptional.get();
+              for (int tank = 0; tank < gasHandler.getTanks(); tank++) {
+                  GasStack gasStack = gasHandler.getChemicalInTank(tank);
+                  if (!gasStack.isEmpty())
+                      filteredGases.add(gasStack); 
+              }
+          }
+      }
+      return filteredGases;
+  }
 
     public List<String> getFilterTags() {
         List<String> filterTags = new ArrayList<>();
@@ -255,6 +340,42 @@ public class BaseCardCache {
         filterCacheFluid.put(key, !isAllowList);
         return !isAllowList;
     }
+
+    public boolean isStackValidForCard(GasStack testStack) {
+      if (filterCard.equals(GasStack.EMPTY)) 
+        return true; //If theres no filter in the card
+
+      GasStackKey key = new GasStackKey(testStack, isCompareNBT);
+
+      if (filterCacheGas.containsKey(key)) 
+        return filterCacheGas.get(key);
+
+      if (filterCard.getItem() instanceof FilterMod) {
+        for (GasStack stack : filteredGases) {
+          if (stack.getTypeRegistryName().compareTo(testStack.getTypeRegistryName()) == 0) {
+              filterCacheGas.put(key, isAllowList);
+              return isAllowList;
+          }
+        }
+      } else if (filterCard.getItem() instanceof FilterTag) {
+        ResourceLocation registryName = testStack.getTypeRegistryName();
+        TagKey<Gas> tagKey = ChemicalTags.GAS.tag(registryName);
+        String tag = tagKey.location().toString().toLowerCase(Locale.ROOT);
+        if (filterTags.contains(tag)) {
+            filterCacheGas.put(key, isAllowList);
+            return isAllowList;
+        }        
+      } else {
+          for (GasStack stack : filteredGases) {
+              if (key.equals(new GasStackKey(stack, isCompareNBT))) {
+                  filterCacheGas.put(key, isAllowList);
+                  return isAllowList;
+              }
+          }
+      }
+      filterCacheGas.put(key, !isAllowList);
+      return !isAllowList;
+  }
 
     @Override
     public boolean equals(Object obj) {

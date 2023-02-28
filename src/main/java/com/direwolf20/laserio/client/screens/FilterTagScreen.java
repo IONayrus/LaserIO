@@ -1,10 +1,19 @@
 package com.direwolf20.laserio.client.screens;
 
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+
 import com.direwolf20.laserio.client.renderer.LaserIOItemRenderer;
 import com.direwolf20.laserio.client.renderer.LaserIOItemRendererFluid;
+import com.direwolf20.laserio.client.renderer.LaserIOItemRendererGas;
 import com.direwolf20.laserio.client.screens.widgets.IconButton;
 import com.direwolf20.laserio.client.screens.widgets.ToggleButton;
 import com.direwolf20.laserio.common.LaserIO;
+import com.direwolf20.laserio.common.addons.mekanism.MekanismCapabilities;
 import com.direwolf20.laserio.common.containers.FilterTagContainer;
 import com.direwolf20.laserio.common.containers.customslot.FilterBasicSlot;
 import com.direwolf20.laserio.common.items.filters.FilterTag;
@@ -16,17 +25,25 @@ import com.direwolf20.laserio.util.MiscTools;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+
+import mekanism.api.chemical.ChemicalTags;
+import mekanism.api.chemical.gas.Gas;
+import mekanism.api.chemical.gas.GasStack;
+import mekanism.api.chemical.gas.IGasHandler;
+import mekanism.common.registries.MekanismBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -36,10 +53,6 @@ import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.registries.ForgeRegistries;
-
-import java.awt.*;
-import java.util.List;
-import java.util.*;
 
 public class FilterTagScreen extends AbstractContainerScreen<FilterTagContainer> {
     private final ResourceLocation GUI = new ResourceLocation(LaserIO.MODID, "textures/gui/filtertag.png");
@@ -58,7 +71,7 @@ public class FilterTagScreen extends AbstractContainerScreen<FilterTagContainer>
     int cycleRenders = 0;
     LaserIOItemRenderer tagItemRenderer;
     LaserIOItemRendererFluid tagFluidRenderer;
-
+    LaserIOItemRendererGas tagGasRenderer;
 
     public FilterTagScreen(FilterTagContainer container, Inventory inv, Component name) {
         super(container, inv, name);
@@ -71,6 +84,7 @@ public class FilterTagScreen extends AbstractContainerScreen<FilterTagContainer>
         BlockEntityWithoutLevelRenderer blockentitywithoutlevelrenderer = new BlockEntityWithoutLevelRenderer(minecraft.getBlockEntityRenderDispatcher(), minecraft.getEntityModels());
         tagItemRenderer = new LaserIOItemRenderer(minecraft.getTextureManager(), minecraft.getModelManager(), minecraft.getItemColors(), blockentitywithoutlevelrenderer);
         tagFluidRenderer = new LaserIOItemRendererFluid(minecraft.getTextureManager(), minecraft.getModelManager(), minecraft.getItemColors(), blockentitywithoutlevelrenderer, this);
+        tagGasRenderer = new LaserIOItemRendererGas(minecraft.getTextureManager(), minecraft.getModelManager(), minecraft.getItemColors(), blockentitywithoutlevelrenderer, this);
     }
 
     @Override
@@ -120,10 +134,23 @@ public class FilterTagScreen extends AbstractContainerScreen<FilterTagContainer>
                     });
                 }
             }
+
+            Optional<IGasHandler> gasHandlerLazyOptional = stackInSlot.getCapability(MekanismCapabilities.GAS_HANDLER).resolve();
+            if (gasHandlerLazyOptional.isPresent()) {
+                IGasHandler gasHandler = gasHandlerLazyOptional.get();
+                for (int tank = 0; tank < gasHandler.getTanks(); tank++) {
+                    GasStack gasStack = gasHandler.getChemicalInTank(tank);
+                    ResourceLocation registryName = gasStack.getTypeRegistryName();
+                    TagKey<Gas> tagKey = ChemicalTags.GAS.tag(registryName);
+                    String tag = tagKey.location().toString().toLowerCase(Locale.ROOT);
+                    if(!stackInSlotTags.contains(tag) && !tags.contains(tag)){
+                      stackInSlotTags.add(tag);
+                    }
+                }
+            }
         }
 
         int tagsPerPage = 11;
-
 
         stackInSlotTags.sort(Comparator.naturalOrder());
         tags.sort(Comparator.naturalOrder());
@@ -173,6 +200,24 @@ public class FilterTagScreen extends AbstractContainerScreen<FilterTagContainer>
                 }
                 matrixStack.popPose();
             }
+
+            var tagManager = ChemicalTags.GAS.getManager().get();
+            var tagGasKey = tagManager.createTagKey(new ResourceLocation(tag));
+            var tagGas = tagManager.getTag(tagGasKey);        
+            String tagName = tagGas.getKey().location().toString().toLowerCase(Locale.ROOT);
+            if (tagName.equals(tag)) {
+              Gas gas = Gas.getFromRegistry(new ResourceLocation(tagName));
+              GasStack drawGasStack = new GasStack(gas, 1000);
+              matrixStack.pushPose();
+              if (!drawGasStack.isEmpty()) {                    
+                var tankItemStack = MekanismBlocks.BASIC_CHEMICAL_TANK.getItemStack();
+                tankItemStack.setCount(1);
+                tankItemStack.setTag(gas.write(new CompoundTag()));
+                tagItemRenderer.renderGuiItem(8f, tankItemStack, (availableItemsstartX) - 4, (tagStartY) - 5, itemRenderer.getModel(tankItemStack, null, null, 0));                    
+              }
+              matrixStack.popPose();
+            }
+
             matrixStack.pushPose();
             matrixStack.scale(0.75f, 0.75f, 0.75f);
             int fontColor = stackInSlotTags.contains(tag) ? Color.BLUE.getRGB() : Color.DARK_GRAY.getRGB();

@@ -1,7 +1,13 @@
 package com.direwolf20.laserio.common.items.filters;
 
+import java.util.Optional;
+
+import com.direwolf20.laserio.common.addons.mekanism.MekanismCapabilities;
 import com.direwolf20.laserio.common.containers.FilterCountContainer;
 import com.direwolf20.laserio.common.containers.customhandler.FilterCountHandler;
+
+import mekanism.api.chemical.gas.GasStack;
+import mekanism.api.chemical.gas.IGasHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -140,6 +146,15 @@ public class FilterCount extends BaseFilter {
                     countTag.putInt("Count", itemStack.getCount());
                     countTag.putInt("MBAmount", itemStack.getCount() * 1000);
                 }
+            } else if (doesItemStackHoldGases(itemStack)) {
+                int mbAmt = getSlotAmount(stack, i);
+                if (mbAmt > 0) {
+                    countTag.putInt("Count", Math.max(1, (int) Math.floor(mbAmt / 1000)));
+                    countTag.putInt("MBAmount", mbAmt);
+                } else {
+                    countTag.putInt("Count", itemStack.getCount());
+                    countTag.putInt("MBAmount", itemStack.getCount() * 1000);
+                }
             } else {
                 countTag.putInt("Count", itemStack.getCount());
                 countTag.putInt("MBAmount", 0);
@@ -176,6 +191,24 @@ public class FilterCount extends BaseFilter {
         }
         return true;
     }
+
+    public static boolean doesItemStackHoldGases(ItemStack stack) {
+      Optional<IGasHandler> gasHandlerLazyOptional = stack.getCapability(MekanismCapabilities.GAS_HANDLER).resolve();
+      if (!gasHandlerLazyOptional.isPresent()) {
+          return false;
+      }
+      GasStack gasStack = GasStack.EMPTY;
+      IGasHandler gasHandler = gasHandlerLazyOptional.get();
+      for (int tank = 0; tank < gasHandler.getTanks(); tank++) {
+          gasStack = gasHandler.getChemicalInTank(tank);
+          if (!gasStack.isEmpty())
+              break;
+      }
+      if (gasStack.isEmpty()) {
+          return false;
+      }
+      return true;
+  }
 
     /** Filter Counts are always allowLists **/
     public static boolean getAllowList(ItemStack stack) {

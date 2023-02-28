@@ -1,18 +1,20 @@
 package com.direwolf20.laserio.common.network.packets;
 
+import java.util.function.Supplier;
+
 import com.direwolf20.laserio.common.containers.CardEnergyContainer;
 import com.direwolf20.laserio.common.containers.CardItemContainer;
 import com.direwolf20.laserio.common.items.cards.BaseCard;
 import com.direwolf20.laserio.common.items.cards.CardEnergy;
 import com.direwolf20.laserio.common.items.cards.CardFluid;
+import com.direwolf20.laserio.common.items.cards.CardGas;
 import com.direwolf20.laserio.common.items.cards.CardItem;
+
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
-
-import java.util.function.Supplier;
 
 public class PacketUpdateCard {
     byte mode;
@@ -109,6 +111,16 @@ public class PacketUpdateCard {
                         if (ticks < Math.max(20 - overClockerCount * 5, 1))
                             ticks = (short) Math.max(20 - overClockerCount * 5, 1);
                         BaseCard.setExtractSpeed(stack, ticks);
+                    } else if (stack.getItem() instanceof CardGas) {
+                      overClockerCount = container.getSlot(1).getItem().getCount();
+                      if (extractAmt > Math.max(overClockerCount * 2000, 1000)) {
+                          extractAmt = Math.max(overClockerCount * 2000, 1000);
+                      }
+                      CardGas.setGasExtractAmt(stack, extractAmt);
+                      short ticks = msg.ticks;
+                      if (ticks < Math.max(20 - overClockerCount * 5, 1))
+                          ticks = (short) Math.max(20 - overClockerCount * 5, 1);
+                      BaseCard.setExtractSpeed(stack, ticks);
                     } else if (stack.getItem() instanceof CardEnergy) {
                         int overClockers = container.getSlot(0).getItem().getCount();
                         int max = 1000;

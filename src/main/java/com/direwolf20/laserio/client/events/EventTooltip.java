@@ -1,11 +1,22 @@
 package com.direwolf20.laserio.client.events;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+
+import org.lwjgl.opengl.GL11;
+
 import com.direwolf20.laserio.client.renderer.LaserIOItemRenderer;
 import com.direwolf20.laserio.common.items.filters.FilterBasic;
 import com.direwolf20.laserio.common.items.filters.FilterCount;
 import com.direwolf20.laserio.common.items.filters.FilterTag;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+
+import mekanism.api.chemical.ChemicalTags;
+import mekanism.api.chemical.gas.Gas;
+import mekanism.api.chemical.gas.GasStack;
+import mekanism.common.registries.MekanismBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
@@ -18,14 +29,11 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.lwjgl.opengl.GL11;
-
-import java.util.Comparator;
-import java.util.List;
 
 public class EventTooltip {
     private static final int STACKS_PER_LINE = 5;
@@ -172,6 +180,22 @@ public class EventTooltip {
             }
             matrices.popPose();
         }
+
+        var tagManager = ChemicalTags.GAS.getManager().get();
+        var tagGasKey = tagManager.createTagKey(new ResourceLocation(tag));
+        var tagGas = tagManager.getTag(tagGasKey);        
+        String tagName = tagGas.getKey().location().toString().toLowerCase(Locale.ROOT);
+        if(tagName.equals(tag)){        
+          Gas gas = Gas.getFromRegistry(new ResourceLocation(tagName));
+          GasStack drawGasStack = new GasStack(gas, 1000);
+          matrices.pushPose();
+          if(!drawGasStack.isEmpty()) {
+            ItemLike tank = MekanismBlocks.BASIC_CHEMICAL_TANK.asItem();
+            ItemStack tankStack = new ItemStack(tank, 1);
+            tooltipItemRenderer.renderGuiItem(8f, tankStack, x, y, itemRenderer.getModel(tankStack, null, null, 0));
+          }
+          matrices.popPose();
+      }
     }
 }
 

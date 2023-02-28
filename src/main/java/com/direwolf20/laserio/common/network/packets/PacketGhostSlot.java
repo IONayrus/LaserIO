@@ -1,19 +1,21 @@
 package com.direwolf20.laserio.common.network.packets;
 
+import java.util.function.Supplier;
+
 import com.direwolf20.laserio.common.containers.CardFluidContainer;
+import com.direwolf20.laserio.common.containers.CardGasContainer;
 import com.direwolf20.laserio.common.containers.CardItemContainer;
 import com.direwolf20.laserio.common.containers.FilterCountContainer;
 import com.direwolf20.laserio.common.containers.customhandler.FilterCountHandler;
 import com.direwolf20.laserio.common.containers.customslot.FilterBasicSlot;
 import com.direwolf20.laserio.common.items.filters.FilterCount;
+
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
-
-import java.util.function.Supplier;
 
 public class PacketGhostSlot {
     private int slotNumber;
@@ -62,12 +64,14 @@ public class PacketGhostSlot {
                     int mbAmt = msg.mbAmt;
                     if (mbAmt == 0 && container instanceof CardFluidContainer) {
                         stack.setCount(0);
+                    } else  if (mbAmt == 0 && container instanceof CardGasContainer) {
+                      stack.setCount(0);
                     } else {
                         stack.setCount(msg.count);
                     }
                     handler.setStackInSlotSave(msg.slotNumber - CardItemContainer.SLOTS, stack);
 
-                    if (mbAmt != -1 && container instanceof CardFluidContainer) { //MB amt is only done in CardFluidContainers
+                    if (mbAmt != -1 && (container instanceof CardFluidContainer || container instanceof CardGasContainer)) { //MB amt is only done in CardFluidContainers
                         handler.setMBAmountInSlot(msg.slotNumber - CardItemContainer.SLOTS, mbAmt);
                     }
                 } else if (container instanceof FilterCountContainer) {

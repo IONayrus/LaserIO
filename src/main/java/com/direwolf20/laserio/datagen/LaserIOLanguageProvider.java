@@ -1,11 +1,12 @@
 package com.direwolf20.laserio.datagen;
 
+import static com.direwolf20.laserio.setup.ModSetup.TAB_NAME;
+
 import com.direwolf20.laserio.common.LaserIO;
 import com.direwolf20.laserio.setup.Registration;
+
 import net.minecraft.data.DataGenerator;
 import net.minecraftforge.common.data.LanguageProvider;
-
-import static com.direwolf20.laserio.setup.ModSetup.TAB_NAME;
 
 public class LaserIOLanguageProvider extends LanguageProvider {
     public LaserIOLanguageProvider(DataGenerator gen, String locale) {
@@ -21,6 +22,7 @@ public class LaserIOLanguageProvider extends LanguageProvider {
         add(Registration.Card_Holder.get(), "Card Holder");
         add(Registration.Card_Item.get(), "Item Card");
         add(Registration.Card_Fluid.get(), "Fluid Card");
+        add(Registration.Card_Gas.get(), "Gas Card");
         add(Registration.Card_Energy.get(), "Energy Card");
         add(Registration.Card_Redstone.get(), "Redstone Card");
         add(Registration.Filter_Basic.get(), "Basic Filter");

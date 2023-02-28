@@ -1,9 +1,17 @@
 package com.direwolf20.laserio.common.items.cards;
 
+import static com.direwolf20.laserio.util.MiscTools.tooltipMaker;
+
+import java.util.List;
+import java.util.Locale;
+
+import javax.annotation.Nullable;
+
 import com.direwolf20.laserio.client.blockentityrenders.LaserNodeBERender;
 import com.direwolf20.laserio.common.containers.CardItemContainer;
 import com.direwolf20.laserio.common.containers.customhandler.CardItemHandler;
 import com.direwolf20.laserio.setup.ModSetup;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,12 +27,6 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Locale;
-
-import static com.direwolf20.laserio.util.MiscTools.tooltipMaker;
-
 public class BaseCard extends Item {
     protected BaseCard.CardType CARDTYPE;
 
@@ -33,7 +35,8 @@ public class BaseCard extends Item {
         FLUID,
         ENERGY,
         REDSTONE,
-        MISSING
+        MISSING,
+        GAS
     }
 
     public enum TransferMode {
