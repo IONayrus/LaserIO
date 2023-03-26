@@ -1,12 +1,23 @@
 package com.direwolf20.laserio.common.network.packets;
 
-import com.direwolf20.laserio.common.containers.*;
+import static com.direwolf20.laserio.common.items.cards.BaseCard.getInventory;
+
+import java.util.function.Supplier;
+
+import com.direwolf20.laserio.common.containers.CardEnergyContainer;
+import com.direwolf20.laserio.common.containers.CardFluidContainer;
+import com.direwolf20.laserio.common.containers.CardGasContainer;
+import com.direwolf20.laserio.common.containers.CardItemContainer;
+import com.direwolf20.laserio.common.containers.CardRedstoneContainer;
+import com.direwolf20.laserio.common.containers.LaserNodeContainer;
 import com.direwolf20.laserio.common.containers.customhandler.CardItemHandler;
 import com.direwolf20.laserio.common.items.cards.CardEnergy;
 import com.direwolf20.laserio.common.items.cards.CardFluid;
+import com.direwolf20.laserio.common.items.cards.CardGas;
 import com.direwolf20.laserio.common.items.cards.CardItem;
 import com.direwolf20.laserio.common.items.cards.CardRedstone;
 import com.direwolf20.laserio.common.items.filters.BaseFilter;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -17,10 +28,6 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkHooks;
-
-import java.util.function.Supplier;
-
-import static com.direwolf20.laserio.common.items.cards.BaseCard.getInventory;
 
 
 public class PacketOpenCard {
@@ -87,6 +94,18 @@ public class PacketOpenCard {
                         if (filterItem.getItem() instanceof BaseFilter)
                             PacketOpenFilter.doOpenFilter(filterItem, itemStack, sender, msg.sourcePos);
                     }
+                } else if (itemStack.getItem() instanceof CardGas) {
+                  if (!msg.hasShiftDown) {
+                      NetworkHooks.openScreen(sender, new SimpleMenuProvider(
+                              (windowId, playerInventory, playerEntity) -> new CardGasContainer(windowId, playerInventory, sender, msg.sourcePos, itemStack, side), Component.translatable("")), (buf -> {
+                          buf.writeItem(itemStack);
+                          buf.writeByte(side);
+                      }));
+                  } else {
+                      ItemStack filterItem = handler.getStackInSlot(0);
+                      if (filterItem.getItem() instanceof BaseFilter)
+                          PacketOpenFilter.doOpenFilter(filterItem, itemStack, sender, msg.sourcePos);
+                  }
                 } else if (itemStack.getItem() instanceof CardEnergy) {
                     NetworkHooks.openScreen(sender, new SimpleMenuProvider(
                             (windowId, playerInventory, playerEntity) -> new CardEnergyContainer(windowId, playerInventory, sender, msg.sourcePos, itemStack, side), Component.translatable("")), (buf -> {

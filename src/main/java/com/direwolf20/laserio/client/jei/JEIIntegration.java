@@ -1,5 +1,10 @@
 package com.direwolf20.laserio.client.jei;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import com.direwolf20.laserio.client.jei.ghostfilterhandlers.GhostFilterBasic;
 import com.direwolf20.laserio.client.jei.ghostfilterhandlers.GhostFilterCard;
 import com.direwolf20.laserio.client.jei.ghostfilterhandlers.GhostFilterCount;
@@ -10,6 +15,7 @@ import com.direwolf20.laserio.client.screens.FilterCountScreen;
 import com.direwolf20.laserio.client.screens.FilterTagScreen;
 import com.direwolf20.laserio.common.LaserIO;
 import com.direwolf20.laserio.setup.Registration;
+
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
@@ -20,10 +26,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeManager;
-
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
 
 @JeiPlugin
 public class JEIIntegration implements IModPlugin {
@@ -41,6 +43,7 @@ public class JEIIntegration implements IModPlugin {
         List<CraftingRecipe> hiddenRecipes = new ArrayList<>();
         hiddenRecipes.add((CraftingRecipe) recipeManager.byKey(new ResourceLocation(Registration.Card_Item.getId() + "_nbtclear")).get());
         hiddenRecipes.add((CraftingRecipe) recipeManager.byKey(new ResourceLocation(Registration.Card_Fluid.getId() + "_nbtclear")).get());
+        hiddenRecipes.add((CraftingRecipe) recipeManager.byKey(new ResourceLocation(Registration.Card_Gas.getId() + "_nbtclear")).get());
         hiddenRecipes.add((CraftingRecipe) recipeManager.byKey(new ResourceLocation(Registration.Card_Energy.getId() + "_nbtclear")).get());
         hiddenRecipes.add((CraftingRecipe) recipeManager.byKey(new ResourceLocation(Registration.Card_Redstone.getId() + "_nbtclear")).get());
         hiddenRecipes.add((CraftingRecipe) recipeManager.byKey(new ResourceLocation(Registration.Filter_Basic.getId() + "_nbtclear")).get());

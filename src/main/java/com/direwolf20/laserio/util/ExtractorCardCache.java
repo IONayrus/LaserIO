@@ -4,7 +4,9 @@ import com.direwolf20.laserio.common.blockentities.LaserNodeBE;
 import com.direwolf20.laserio.common.items.cards.BaseCard;
 import com.direwolf20.laserio.common.items.cards.CardEnergy;
 import com.direwolf20.laserio.common.items.cards.CardFluid;
+import com.direwolf20.laserio.common.items.cards.CardGas;
 import com.direwolf20.laserio.common.items.cards.CardItem;
+
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 
@@ -23,6 +25,8 @@ public class ExtractorCardCache extends BaseCardCache {
             this.extractAmt = CardFluid.getFluidExtractAmt(cardItem);
         else if (cardType.equals(BaseCard.CardType.ENERGY))
             this.extractAmt = CardEnergy.getEnergyExtractAmt(cardItem);
+        else if (cardType.equals(BaseCard.CardType.GAS))
+            this.extractAmt = CardGas.getGasExtractAmt(cardItem);
         else
             this.extractAmt = 0;
         if (cardItem.getItem() instanceof CardEnergy)

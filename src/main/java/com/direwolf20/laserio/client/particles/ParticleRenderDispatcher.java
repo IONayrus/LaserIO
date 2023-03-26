@@ -1,8 +1,10 @@
 package com.direwolf20.laserio.client.particles;
 
 import com.direwolf20.laserio.client.particles.fluidparticle.FluidFlowParticle;
+import com.direwolf20.laserio.client.particles.gasparticle.GasFlowParticle;
 import com.direwolf20.laserio.client.particles.itemparticle.ItemFlowParticle;
 import com.direwolf20.laserio.common.LaserIO;
+
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -16,5 +18,6 @@ public class ParticleRenderDispatcher {
     public static void registerProviders(RegisterParticleProvidersEvent evt) {
         evt.register(ModParticles.ITEMFLOWPARTICLE.get(), ItemFlowParticle.FACTORY);
         evt.register(ModParticles.FLUIDFLOWPARTICLE.get(), FluidFlowParticle.FACTORY);
+        evt.register(ModParticles.GASFLOWPARTICLE.get(), GasFlowParticle.FACTORY);
     }
 }

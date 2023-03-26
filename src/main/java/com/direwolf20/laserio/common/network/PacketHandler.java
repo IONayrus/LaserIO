@@ -1,7 +1,21 @@
 package com.direwolf20.laserio.common.network;
 
 import com.direwolf20.laserio.common.LaserIO;
-import com.direwolf20.laserio.common.network.packets.*;
+import com.direwolf20.laserio.common.network.packets.PacketGhostSlot;
+import com.direwolf20.laserio.common.network.packets.PacketNodeParticles;
+import com.direwolf20.laserio.common.network.packets.PacketNodeParticlesFluid;
+import com.direwolf20.laserio.common.network.packets.PacketNodeParticlesGas;
+import com.direwolf20.laserio.common.network.packets.PacketOpenCard;
+import com.direwolf20.laserio.common.network.packets.PacketOpenFilter;
+import com.direwolf20.laserio.common.network.packets.PacketOpenNode;
+import com.direwolf20.laserio.common.network.packets.PacketUpdateCard;
+import com.direwolf20.laserio.common.network.packets.PacketUpdateCardChannel;
+import com.direwolf20.laserio.common.network.packets.PacketUpdateFilter;
+import com.direwolf20.laserio.common.network.packets.PacketUpdateFilterTag;
+import com.direwolf20.laserio.common.network.packets.PacketUpdateOverclockerChannel;
+import com.direwolf20.laserio.common.network.packets.PacketUpdateRedstoneCard;
+import com.direwolf20.laserio.common.network.packets.PacketUpdateRedstoneChannel;
+
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,8 +57,8 @@ public class PacketHandler {
 
         //Client Side
         HANDLER.registerMessage(id++, PacketNodeParticles.class, PacketNodeParticles::encode, PacketNodeParticles::decode, PacketNodeParticles.Handler::handle);
-        HANDLER.registerMessage(id++, PacketNodeParticlesFluid.class, PacketNodeParticlesFluid::encode, PacketNodeParticlesFluid::decode, PacketNodeParticlesFluid.Handler::handle);
-        //HANDLER.registerMessage(id++, PacketDurabilitySync.class,     PacketDurabilitySync::encode,       PacketDurabilitySync::decode,       PacketDurabilitySync.Handler::handle);
+        HANDLER.registerMessage(id++, PacketNodeParticlesFluid.class, PacketNodeParticlesFluid::encode, PacketNodeParticlesFluid::decode, PacketNodeParticlesFluid.Handler::handle);        
+        HANDLER.registerMessage(id++, PacketNodeParticlesGas.class,     PacketNodeParticlesGas::encode,       PacketNodeParticlesGas::decode,       PacketNodeParticlesGas.Handler::handle);
 
     }
 
